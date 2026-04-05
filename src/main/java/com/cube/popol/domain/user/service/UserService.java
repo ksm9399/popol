@@ -1,8 +1,8 @@
 package com.cube.popol.domain.user.service;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.cube.popol.domain.auth.service.AuthService;
 import com.cube.popol.domain.user.dto.UserDTO;
 import com.cube.popol.domain.user.entity.UserEntity;
 import com.cube.popol.domain.user.enums.UserRole;
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
   private final UserRepository userRepository;
-  private final BCryptPasswordEncoder passwordEncoder;
+  private final AuthService authService;
 
   // 아이디 중복 검사
   public boolean existsByUserId(UserDTO userDTO) {
@@ -24,7 +24,8 @@ public class UserService {
 
   // 회원 저장
   public void saveUser(UserDTO userDTO) {
-    String encodedPassword = passwordEncoder.encode(userDTO.getPassword());
+    // 비밀번호 암호화
+    String encodedPassword = authService.encodePassword(userDTO.getPassword());
 
     UserEntity userEntity = UserEntity.builder()
       .userId(userDTO.getUserId())
