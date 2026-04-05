@@ -1,9 +1,0 @@
-spring:
-  application:
-    name: popol
-
-  # 시큐리티 임시 계정
-  security:
-    user:
-      name: admin
-      password: admin
