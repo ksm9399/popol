@@ -11,5 +11,4 @@ public class PopolApplication {
 
 		System.out.println("========== application popol cube started ==========");
 	}
-
 }
