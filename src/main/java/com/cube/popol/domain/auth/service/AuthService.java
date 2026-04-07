@@ -37,4 +37,9 @@ public class AuthService {
     String token = jwtProvider.createToken(authentication);
     jwtProvider.addTokenToCookie(response, token);
   }
+
+
+  public void userLogout(HttpServletResponse response) {
+    jwtProvider.deleteTokenCookie(response);
+  }
 }
