@@ -14,7 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.cube.popol.global.jwt.JwtAuthenticationFilter;
 
@@ -24,13 +23,12 @@ import com.cube.popol.global.jwt.JwtAuthenticationFilter;
 public class SecurityConfig {
 
   private final JwtProvider jwtProvider;
-  private final CorsConfigurationSource corsConfigurationSource;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.disable())
-      .cors(cors -> cors.configurationSource(corsConfigurationSource))
+      .cors(cors -> {}) // corsConfigurationSource라는 이름의 빈을 자동으로 찾아 연결
       .formLogin(form -> form.disable())
       .httpBasic(basic -> basic.disable())
       .authorizeHttpRequests(auth -> auth
