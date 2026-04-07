@@ -22,5 +22,5 @@ public enum UserRole {
       }
     }
     throw new IllegalArgumentException("Unknown role: " + value);
-}
+  }
 }

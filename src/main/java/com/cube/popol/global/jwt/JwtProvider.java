@@ -99,8 +99,19 @@ public class JwtProvider {
   public void addTokenToCookie(HttpServletResponse response, String token) {
     Cookie cookie = new Cookie("accessToken", token);
     cookie.setHttpOnly(true);
+    cookie.setSecure(true);
     cookie.setPath("/");
     cookie.setMaxAge((int) (ACCESS_TOKEN_EXPIRE / 1000));
+    response.addCookie(cookie);
+  }
+
+  // 로그아웃시 토큰 쿠키 삭제
+  public void deleteTokenCookie(HttpServletResponse response) {
+    Cookie cookie = new Cookie("accessToken", null);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(true);
+    cookie.setPath("/");
+    cookie.setMaxAge(0); // 쿠키 즉시 삭제
     response.addCookie(cookie);
   }
 }

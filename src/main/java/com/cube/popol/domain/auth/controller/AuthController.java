@@ -1,9 +1,13 @@
 package com.cube.popol.domain.auth.controller;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +17,7 @@ import com.cube.popol.domain.auth.dto.SignUpFailResponseDTO;
 import com.cube.popol.domain.auth.service.AuthService;
 import com.cube.popol.domain.user.dto.UserDTO;
 import com.cube.popol.domain.user.service.UserService;
+import com.cube.popol.global.custom.CustomUserDetails;
 import com.cube.popol.global.response.ApiResponse;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,14 +36,12 @@ public class AuthController {
   public ResponseEntity<ApiResponse<?>> postSignUp(
     @RequestBody UserDTO userDTO
   ) {
-
     // 아이디 중복 검사
     if (userService.existsByUserId(userDTO)) {
       return ResponseEntity.badRequest().body(
         new ApiResponse<>(false, "이미 존재하는 아이디입니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
       );
-    }
-    else {
+    } else {
       // 비밀번호 형식 검사
       if (!userDTO.isPasswordValid()) {
         return ResponseEntity.badRequest().body(
@@ -57,22 +60,50 @@ public class AuthController {
     @RequestBody UserDTO userDTO,
     HttpServletResponse response
   ) {
-
     try {
       authService.userLogin(userDTO, response);
       return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", null));
     } catch (BadCredentialsException e) {
-        // 비밀번호가 틀린 경우
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(new ApiResponse<>(false, "아이디 또는 비밀번호가 일치하지 않습니다.", null));
+      // 비밀번호가 틀린 경우
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+        new ApiResponse<>(false, "아이디 또는 비밀번호가 일치하지 않습니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
+      );
     } catch (InternalAuthenticationServiceException e) {
-        // 아이디가 존재하지 않거나 시스템 에러
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(new ApiResponse<>(false, "존재하지 않는 사용자입니다.", null));
+      // 아이디가 존재하지 않거나 시스템 에러
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+        new ApiResponse<>(false, "존재하지 않는 사용자입니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
+      );
     } catch (Exception e) {
-        // 기타 서버 에러
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(new ApiResponse<>(false, "서버 오류가 발생했습니다.", null));
+      // 기타 서버 에러
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+        new ApiResponse<>(false, "서버 오류가 발생했습니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
+      );
     }
+  }
+
+  /* 로그아웃 */
+  @PostMapping("/sign-out")
+  public ResponseEntity<ApiResponse<?>> postSignOut(
+    HttpServletResponse response
+  ) {
+    // 로그아웃 로직 구현
+    authService.userLogout(response);
+    return ResponseEntity.ok(new ApiResponse<>(true, "로그아웃 성공", null));
+  }
+
+  @GetMapping("/me")
+  public ResponseEntity<ApiResponse<?>> getMyInfo(
+    @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    if (userDetails == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+        new ApiResponse<>(false, "인증되지 않은 사용자입니다.", null)
+      );
+    }
+
+    return ResponseEntity.ok(new ApiResponse<>(true, "내 정보 조회 성공", Map.of(
+      "userId", userDetails.getUsername(),
+      "role", userDetails.getRole()
+    )));
   }
 }
