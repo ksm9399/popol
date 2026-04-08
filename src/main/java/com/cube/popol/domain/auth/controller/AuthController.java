@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,13 +40,13 @@ public class AuthController {
     // 아이디 중복 검사
     if (userService.existsByUserId(userDTO)) {
       return ResponseEntity.badRequest().body(
-        new ApiResponse<>(false, "이미 존재하는 아이디입니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
+        new ApiResponse<>(false, "이미 존재하는 아이디입니다.", null)
       );
     } else {
       // 비밀번호 형식 검사
       if (!userDTO.isPasswordValid()) {
         return ResponseEntity.badRequest().body(
-          new ApiResponse<>(false, "비밀번호 형식이 올바르지 않습니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
+          new ApiResponse<>(false, "비밀번호 형식이 올바르지 않습니다.", null)
         );
       }
 
@@ -84,10 +85,11 @@ public class AuthController {
   /* 로그아웃 */
   @PostMapping("/sign-out")
   public ResponseEntity<ApiResponse<?>> postSignOut(
-    HttpServletResponse response
+    HttpServletResponse response,
+    @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    // 로그아웃 로직 구현
-    authService.userLogout(response);
+    String userId = userDetails.getUsername();
+    authService.userLogout(response, userId);
     return ResponseEntity.ok(new ApiResponse<>(true, "로그아웃 성공", null));
   }
 
@@ -105,5 +107,26 @@ public class AuthController {
       "userId", userDetails.getUsername(),
       "role", userDetails.getRole()
     )));
+  }
+
+  @PostMapping("/reissue")
+  public ResponseEntity<ApiResponse<?>> postReissue(
+    @CookieValue(value = "refreshToken", required = false) String refreshToken,
+    HttpServletResponse response
+  ) {
+    if (refreshToken == null || refreshToken.isEmpty()) {
+      return ResponseEntity.badRequest().body(
+        new ApiResponse<>(false, "리프레시 토큰이 필요합니다.", null)
+      );
+    }
+
+    try {
+      authService.reissueTokens(response, refreshToken);
+      return ResponseEntity.ok(new ApiResponse<>(true, "토큰 재발급 성공", null));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+        new ApiResponse<>(false, "유효하지 않은 리프레시 토큰입니다.", null)
+      );
+    }
   }
 }

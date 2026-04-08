@@ -30,8 +30,11 @@ public class JwtProvider {
   @Value("${jwt.secret}")
   private String SECRET_KEY;
 
-  @Value("${jwt.expire}")
+  @Value("${jwt.access-expire}")
   private long ACCESS_TOKEN_EXPIRE;
+
+  @Value("${jwt.refresh-expire}")
+  private long REFRESH_TOKEN_EXPIRE;
 
   private Key key;
 
@@ -41,8 +44,8 @@ public class JwtProvider {
     key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
   }
 
-  // 토큰 생성
-  public String createToken(Authentication authentication) {
+  // access 토큰 생성
+  public String createAccessToken(Authentication authentication) {
     CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
     String role = user.getAuthorities().iterator().next().getAuthority();
 
@@ -51,6 +54,33 @@ public class JwtProvider {
       .claim("role", role)
       .setIssuedAt(new Date())
       .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRE))
+      .signWith(key)
+      .compact();
+  }
+
+  // refreshToken 생성
+  public String createRefreshToken(Authentication authentication) {
+    CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+    String role = user.getAuthorities().iterator().next().getAuthority();
+
+    return Jwts.builder()
+      .setSubject(user.getUsername())
+      .claim("role", role)
+      .setIssuedAt(new Date())
+      .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRE)) // refreshToken은 7일
+      .signWith(key)
+      .compact();
+  }
+
+  // 재발급 토큰 생성 (userId, role로 생성)
+  public String createNewToken(String userId, String role, String tokenType) {
+    long expireTime = "access".equals(tokenType) ? ACCESS_TOKEN_EXPIRE : REFRESH_TOKEN_EXPIRE;
+
+    return Jwts.builder()
+      .setSubject(userId)
+      .claim("role", role)
+      .setIssuedAt(new Date())
+      .setExpiration(new Date(System.currentTimeMillis() + expireTime))
       .signWith(key)
       .compact();
   }
@@ -71,20 +101,22 @@ public class JwtProvider {
   }
 
   // 토큰 검증
-  public boolean validateToken(String token) {
+  public void validateToken(String token) {
     try {
       parseClaims(token);
-      return true;
     } catch (SecurityException | MalformedJwtException e) {
       log.info("잘못된 JWT 서명입니다.");
+      throw new RuntimeException("INVALID_TOKEN", e);
     } catch (ExpiredJwtException e) {
       log.info("만료된 JWT 토큰입니다.");
+      throw new RuntimeException("EXPIRED_TOKEN", e);
     } catch (UnsupportedJwtException e) {
       log.info("지원되지 않는 JWT 토큰입니다.");
+      throw new RuntimeException("UNSUPPORTED_TOKEN", e);
     } catch (IllegalArgumentException e) {
       log.info("JWT 토큰이 잘못되었습니다.");
+      throw new RuntimeException("INVALID_TOKEN", e);
     }
-    return false;
   }
 
   // Claims 파싱
@@ -96,22 +128,46 @@ public class JwtProvider {
       .getBody();
   }
 
-  public void addTokenToCookie(HttpServletResponse response, String token) {
-    Cookie cookie = new Cookie("accessToken", token);
+  public void addTokenToCookie(HttpServletResponse response, String token, String cookieName) {
+    Cookie cookie = new Cookie(cookieName, token);
     cookie.setHttpOnly(true);
     cookie.setSecure(true);
     cookie.setPath("/");
-    cookie.setMaxAge((int) (ACCESS_TOKEN_EXPIRE / 1000));
+
+    // 토큰 이름에 따라 만료 시간 설정
+    long expire = cookieName.equals("refreshToken") ? REFRESH_TOKEN_EXPIRE : ACCESS_TOKEN_EXPIRE;
+    cookie.setMaxAge((int) (expire / 1000));
+
     response.addCookie(cookie);
   }
 
   // 로그아웃시 토큰 쿠키 삭제
-  public void deleteTokenCookie(HttpServletResponse response) {
-    Cookie cookie = new Cookie("accessToken", null);
+  public void deleteTokenCookie(HttpServletResponse response, String cookieName) {
+    Cookie cookie = new Cookie(cookieName, null);
     cookie.setHttpOnly(true);
     cookie.setSecure(true);
     cookie.setPath("/");
     cookie.setMaxAge(0); // 쿠키 즉시 삭제
     response.addCookie(cookie);
+  }
+
+  public long getRefreshTokenExpireTime() {
+    return REFRESH_TOKEN_EXPIRE;
+  }
+
+  public String getUserIdFromToken(String token) {
+    Claims claims = parseClaims(token);
+    return claims.getSubject();
+  }
+
+  public String getRoleFromToken(String token) {
+    try {
+      Claims claims = parseClaims(token);
+      return claims.get("role", String.class);
+    } catch (ExpiredJwtException e) {
+      // 토큰이 만료된 경우에도 Claims를 얻을 수 있음
+      Claims claims = e.getClaims();
+      return claims.get("role", String.class);
+    }
   }
 }
