@@ -6,6 +6,7 @@ import java.util.Date;
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,7 +21,6 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -128,24 +128,28 @@ public class JwtProvider {
   }
 
   public void addTokenToCookie(HttpServletResponse response, String token, String cookieName) {
-    Cookie cookie = new Cookie(cookieName, token);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(true);
-    cookie.setPath("/");
-
     long expire = cookieName.equals("refreshToken") ? REFRESH_TOKEN_EXPIRE : ACCESS_TOKEN_EXPIRE;
-    cookie.setMaxAge((int) (expire / 1000));
+    ResponseCookie responseCookie = ResponseCookie.from(cookieName, token)
+      .httpOnly(true)
+      .secure(true)
+      .path("/")
+      .sameSite("Lax")
+      .maxAge(expire / 1000)
+      .build();
 
-    response.addCookie(cookie);
+    response.addHeader("Set-Cookie", responseCookie.toString());
   }
 
   public void deleteTokenCookie(HttpServletResponse response, String cookieName) {
-    Cookie cookie = new Cookie(cookieName, null);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(true);
-    cookie.setPath("/");
-    cookie.setMaxAge(0);
-    response.addCookie(cookie);
+    ResponseCookie responseCookie = ResponseCookie.from(cookieName, "")
+      .httpOnly(true)
+      .secure(true)
+      .path("/")
+      .sameSite("Lax")
+      .maxAge(0)
+      .build();
+
+    response.addHeader("Set-Cookie", responseCookie.toString());
   }
 
   public long getRefreshTokenExpireTime() {
