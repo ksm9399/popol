@@ -15,6 +15,8 @@ public class UserDTO {
   private String userId;
   private String password;
   private UserRole role;
+  private String userEmail;
+  private String userNickname;
 
   // 비밀번호 형식 검사
   public boolean isPasswordValid() {
