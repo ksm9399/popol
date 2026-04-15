@@ -8,6 +8,7 @@ import com.cube.popol.domain.user.dto.UserDTO;
 import com.cube.popol.domain.user.entity.UserEntity;
 import com.cube.popol.domain.user.enums.UserRole;
 import com.cube.popol.domain.user.repository.UserRepository;
+import com.cube.popol.global.redis.RedisRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +18,7 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final AuthService authService;
+  private final RedisRepository redisRepository;
 
   // 아이디 중복 검사
   public boolean existsByUserId(UserDTO userDTO) {
@@ -38,5 +40,8 @@ public class UserService {
       .build();
 
     userRepository.save(userEntity);
+
+    // redis 인증코드 제거
+    redisRepository.deleteEmailAuthCode(userDTO.getUserId());
   }
 }
