@@ -24,10 +24,12 @@ import com.cube.popol.global.response.ApiResponse;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
+@Slf4j
 public class AuthController {
 
   private final UserService userService;
@@ -137,12 +139,49 @@ public class AuthController {
   ) {
     long ttl = authService.sendEmailAuthCode(userDTO);
 
+    EmailResponseDTO resultData = new EmailResponseDTO();
+    resultData.setTtl(ttl);
+
     return ResponseEntity.ok(
       new ApiResponse<>(
         true,
         "입력하신 이메일로 인증코드를 보냈습니다.\n 메일을 받지 못했다면 이메일을 다시 확인해주세요.",
-        new EmailResponseDTO(ttl)
+        resultData
       )
     );
+  }
+
+  @PostMapping("/email/validate-code")
+  public ResponseEntity<ApiResponse<?>> validationEmailAuthCode(
+    @RequestBody UserDTO userDTO
+  ) {
+    String message = "";
+    EmailResponseDTO resultData = new EmailResponseDTO();
+
+    try {
+      boolean validFlg = authService.validationEmailAuthCode(userDTO);
+      resultData.setValidFlg(validFlg);
+
+      if (!validFlg) {
+      message = "인증코드가 일치하지 않습니다.";
+      }
+
+      return ResponseEntity.ok(
+        new ApiResponse<>(
+          validFlg,
+          message,
+          resultData
+        )
+      );
+    } catch (Exception e) {
+      log.error("인증코드 검증 에러", e);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+        new ApiResponse<>(
+          false,
+          e.getMessage(),
+          null
+        )
+      );
+    }
   }
 }

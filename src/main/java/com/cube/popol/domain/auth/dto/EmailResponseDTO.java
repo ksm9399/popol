@@ -12,4 +12,5 @@ import lombok.ToString;
 public class EmailResponseDTO {
 
   private Long ttl;
+  private boolean validFlg;
 }

@@ -72,7 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private static final List<String> EXCLUDE_URLS = List.of(
     "/api/auth/sign-in",
     "/api/auth/reissue",
-    "/api/auth/email/send-code"
+    "/api/auth/email/send-code",
+    "/api/auth/email/validate-code"
   );
 
   @Override

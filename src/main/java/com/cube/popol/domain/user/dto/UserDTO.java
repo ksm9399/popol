@@ -18,6 +18,9 @@ public class UserDTO {
   private String userEmail;
   private String userNickname;
 
+  // 이메일 인증코드
+  private String verificationCode;
+
   // 비밀번호 형식 검사
   public boolean isPasswordValid() {
     // 비밀번호는 최소 8자 이상이어야 하며, 영문 대소문자, 숫자, 특수문자를 포함

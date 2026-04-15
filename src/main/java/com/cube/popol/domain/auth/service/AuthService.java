@@ -166,4 +166,21 @@ public class AuthService {
       redisRepository.deleteEmailAuthCode(to);
     }
   }
+
+  public boolean validationEmailAuthCode(UserDTO userDTO) {
+    String userId = userDTO.getUserId();
+    String userInputCode = userDTO.getVerificationCode();
+    String redisGetCode = redisRepository.getEmailAuthCode(userId);
+
+    if (redisGetCode == null) {
+      throw new RuntimeException("인증코드가 존재하지 않거나 만료되었습니다.");
+    }
+
+    if (redisGetCode.equals(userInputCode)) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
 }
