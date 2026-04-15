@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial;">
+
+  <h2>이메일 인증</h2>
+  <p>아래 인증코드를 입력해주세요</p>
+
+  <!-- 🔥 핵심 -->
+  <h1 th:text="${authCode}" style="letter-spacing: 8px;">123456</h1>
+
+  <p>이 코드는 5분간 유효합니다.</p>
+
+</body>
+</html>

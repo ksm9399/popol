@@ -1,6 +1,7 @@
 package com.cube.popol.global.jwt;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -68,10 +69,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   // 필터 적용 제외 (로그인, 토큰 재발급 제외)
+  private static final List<String> EXCLUDE_URLS = List.of(
+    "/api/auth/sign-in",
+    "/api/auth/reissue",
+    "/api/auth/email/send-code",
+    "/api/auth/email/validate-code"
+  );
+
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
       String path = request.getRequestURI();
-      return path.equals("/api/auth/sign-in") || path.equals("/api/auth/reissue");
+      return EXCLUDE_URLS.contains(path);
   }
 
 }

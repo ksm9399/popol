@@ -17,7 +17,8 @@ public class CorsConfig {
 
     config.setAllowCredentials(true);
     config.setAllowedOrigins(Arrays.asList(
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "https://localhost:5173"
     ));
     config.addAllowedHeader("*");
     config.addAllowedMethod("*");
