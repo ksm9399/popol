@@ -17,6 +17,7 @@ public class RedisConfig {
 
     StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
+    // setConnectionFactory(redisConnectionFactory) - yml파일에서 설정한 redis 연결 정보를 기반으로 RedisTemplate에 연결 팩토리를 설정
     redisTemplate.setConnectionFactory(redisConnectionFactory);
     redisTemplate.setKeySerializer(stringRedisSerializer);
     redisTemplate.setValueSerializer(stringRedisSerializer);

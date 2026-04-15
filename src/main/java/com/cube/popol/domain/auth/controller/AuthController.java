@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cube.popol.domain.auth.dto.EmailResponseDTO;
 import com.cube.popol.domain.auth.dto.SignUpFailResponseDTO;
 import com.cube.popol.domain.auth.service.AuthService;
 import com.cube.popol.domain.user.dto.UserDTO;
@@ -128,5 +129,20 @@ public class AuthController {
         new ApiResponse<>(false, "유효하지 않은 리프레시 토큰입니다.", null)
       );
     }
+  }
+
+  @PostMapping("/email/send-code")
+  public ResponseEntity<ApiResponse<?>> sendEmailAuthCode(
+    @RequestBody UserDTO userDTO
+  ) {
+    long ttl = authService.sendEmailAuthCode(userDTO);
+
+    return ResponseEntity.ok(
+      new ApiResponse<>(
+        true,
+        "입력하신 이메일로 인증코드를 보냈습니다.\n 메일을 받지 못했다면 이메일을 다시 확인해주세요.",
+        new EmailResponseDTO(ttl)
+      )
+    );
   }
 }
