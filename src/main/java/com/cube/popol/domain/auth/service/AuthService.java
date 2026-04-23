@@ -48,13 +48,15 @@ public class AuthService {
       new UsernamePasswordAuthenticationToken(userDTO.getUserId(), userDTO.getPassword())
     );
 
+    // 필요 데이터 추출 (userId, role)
+    String userId = authentication.getName();
+    String role = authentication.getAuthorities().iterator().next().getAuthority();
+
     // 토큰 생성 및 쿠키 설정
     String token = jwtProvider.createAccessToken(authentication);
     String refreshToken = jwtProvider.createRefreshToken(authentication);
 
     // reids에 refreshToken 저장
-    // userId 추출
-    String userId = authentication.getName();
     redisRepository.saveRefreshToken(
       userId,
       refreshToken,
@@ -65,7 +67,6 @@ public class AuthService {
     jwtProvider.addTokenToCookie(response, refreshToken, "refreshToken");
 
     // user 데이터 반환
-    String role = authentication.getAuthorities().iterator().next().getAuthority();
     UserDTO resUserDto = new UserDTO();
     resUserDto.setUserId(userId);
     resUserDto.setRole(UserRole.fromString(role));

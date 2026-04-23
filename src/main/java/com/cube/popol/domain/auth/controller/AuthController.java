@@ -64,25 +64,8 @@ public class AuthController {
     @RequestBody UserDTO userDTO,
     HttpServletResponse response
   ) {
-    try {
-      UserDTO userDto = authService.userLogin(userDTO, response);
-      return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", userDto));
-    } catch (BadCredentialsException e) {
-      // 비밀번호가 틀린 경우
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-        new ApiResponse<>(false, "아이디 또는 비밀번호가 일치하지 않습니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
-      );
-    } catch (InternalAuthenticationServiceException e) {
-      // 아이디가 존재하지 않거나 시스템 에러
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-        new ApiResponse<>(false, "존재하지 않는 사용자입니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
-      );
-    } catch (Exception e) {
-      // 기타 서버 에러
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-        new ApiResponse<>(false, "서버 오류가 발생했습니다.", new SignUpFailResponseDTO(userDTO.getUserId()))
-      );
-    }
+    UserDTO userDto = authService.userLogin(userDTO, response);
+    return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", userDto));
   }
 
   /* 로그아웃 */
