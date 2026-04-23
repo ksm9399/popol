@@ -13,6 +13,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.cube.popol.domain.user.dto.UserDTO;
+import com.cube.popol.domain.user.enums.UserRole;
 import com.cube.popol.global.jwt.JwtProvider;
 import com.cube.popol.global.redis.RedisRepository;
 import com.cube.popol.global.util.RandomUtil;
@@ -38,7 +39,7 @@ public class AuthService {
     return passwordEncoder.encode(rawPassword);
   }
 
-  public void userLogin(
+  public UserDTO userLogin(
     UserDTO userDTO,
     HttpServletResponse response
   ) {
@@ -47,13 +48,15 @@ public class AuthService {
       new UsernamePasswordAuthenticationToken(userDTO.getUserId(), userDTO.getPassword())
     );
 
+    // 필요 데이터 추출 (userId, role)
+    String userId = authentication.getName();
+    String role = authentication.getAuthorities().iterator().next().getAuthority();
+
     // 토큰 생성 및 쿠키 설정
     String token = jwtProvider.createAccessToken(authentication);
     String refreshToken = jwtProvider.createRefreshToken(authentication);
 
     // reids에 refreshToken 저장
-    // userId 추출
-    String userId = authentication.getName();
     redisRepository.saveRefreshToken(
       userId,
       refreshToken,
@@ -62,6 +65,13 @@ public class AuthService {
 
     jwtProvider.addTokenToCookie(response, token, "accessToken");
     jwtProvider.addTokenToCookie(response, refreshToken, "refreshToken");
+
+    // user 데이터 반환
+    UserDTO resUserDto = new UserDTO();
+    resUserDto.setUserId(userId);
+    resUserDto.setRole(UserRole.fromString(role));
+
+    return resUserDto;
   }
 
   public void userLogout(HttpServletResponse response, String userId) {
