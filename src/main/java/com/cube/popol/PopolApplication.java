@@ -10,6 +10,5 @@ public class PopolApplication {
 		SpringApplication.run(PopolApplication.class, args);
 
 		System.out.println("========== application popol cube started ==========");
-
 	}
 }

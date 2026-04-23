@@ -65,8 +65,8 @@ public class AuthController {
     HttpServletResponse response
   ) {
     try {
-      authService.userLogin(userDTO, response);
-      return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", null));
+      UserDTO userDto = authService.userLogin(userDTO, response);
+      return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", userDto));
     } catch (BadCredentialsException e) {
       // 비밀번호가 틀린 경우
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(

@@ -13,6 +13,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.cube.popol.domain.user.dto.UserDTO;
+import com.cube.popol.domain.user.enums.UserRole;
 import com.cube.popol.global.jwt.JwtProvider;
 import com.cube.popol.global.redis.RedisRepository;
 import com.cube.popol.global.util.RandomUtil;
@@ -38,7 +39,7 @@ public class AuthService {
     return passwordEncoder.encode(rawPassword);
   }
 
-  public void userLogin(
+  public UserDTO userLogin(
     UserDTO userDTO,
     HttpServletResponse response
   ) {
@@ -62,6 +63,14 @@ public class AuthService {
 
     jwtProvider.addTokenToCookie(response, token, "accessToken");
     jwtProvider.addTokenToCookie(response, refreshToken, "refreshToken");
+
+    // user 데이터 반환
+    String role = authentication.getAuthorities().iterator().next().getAuthority();
+    UserDTO resUserDto = new UserDTO();
+    resUserDto.setUserId(userId);
+    resUserDto.setRole(UserRole.fromString(role));
+
+    return resUserDto;
   }
 
   public void userLogout(HttpServletResponse response, String userId) {
